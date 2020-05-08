@@ -115,8 +115,8 @@ void setup() {
   
   FillRect(0, 0, 320, 240, BLACK);  
   for(int x = 320-20; x >0; x--){
-  digitalWrite(PE_2, HIGH);
-  digitalWrite(PE_2, LOW); 
+  digitalWrite(PE_2, HIGH); //Señal para encender la 
+  digitalWrite(PE_2, LOW);  //Cancion de entrada 
   int anim2 = (x/11)%2;
   LCD_Sprite(95,110,144,17,titulo,2,anim2,0,0); 
   }
@@ -131,14 +131,241 @@ void setup() {
   {
     delay(100);
   }  
- }
-  
+  unsigned long start = millis();
+  LCD_Clear(0x00);
+  Rect(10,10,240,220,0xffff);
+  while(millis() - start < 2000);
+  ball_update = millis();
+  paddle_update = ball_update;
+  ball_x = random(100,110); 
+  ball_y = random(150,160);  
 }
 //***************************************************************************************************************************************
 // Loop Infinito
 //***************************************************************************************************************************************
 void loop() {
+unsigned long time = millis();    
+static bool up_state = false;
+static bool down_state = false;
+static bool up_state2 = false;
+static bool down_state2 = false;
+up_state |= (digitalRead(UP_BUTTON) == LOW);
+down_state |= (digitalRead(DOWN_BUTTON) == LOW);
+up_state2 |= (digitalRead(UP_BUTTON2) == LOW);
+down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW); 
+   
+  if(resetBall)
+    {
+      ball_x = random(100,110); 
+      ball_y = random(150,160);
+      do
+      {
+      ball_dir_x = random(-1,2);
+      }while(ball_dir_x==0);
+
+       do
+      {
+      ball_dir_y = random(-1,2);
+      }while(ball_dir_y==0);
+      
+      
+      resetBall=false;
+    }
+    
+    if(time > ball_update && gameIsRunning) {
+        
+        uint8_t new_x = ball_x + ball_dir_x;
+        uint8_t new_y = ball_y + ball_dir_y;
+
+        // Miramos si la pelota golpeo los horizontales 
+        if(new_x == 10) //Jugador 1 recibe 1 punto
+        {
+            PLAYER_SCORE++;
+            if(PLAYER_SCORE==MAX_SCORE)
+            {
+            //gameOver();
+            }else
+            {
+            //showScore();
+            }
+        }
+        
+         // Check if we hit the vertical walls
+        if(new_x == 246) //CPU Gets a Point
+        {
+            CPU_SCORE++;
+            if(CPU_SCORE==MAX_SCORE)
+            {
+              gameOver();
+            }else
+            {
+              showScore();
+            }
+        }
+
+        // Check if we hit the horizontal walls.
+        if(new_y == 10 || new_y == 229) {
+            digitalWrite(PA_6,HIGH);
+            ball_dir_y = -ball_dir_y;
+            new_y += ball_dir_y + ball_dir_y;
+            digitalWrite(PA_6,LOW);
+            
+        }
+
+        // Check if we hit the CPU paddle
+       /* if(new_x == CPU_X && new_y >= cpu_y && new_y <= cpu_y + PADDLE_HEIGHT) {
+            ball_dir_x = -ball_dir_x;
+            new_x += ball_dir_x + ball_dir_x;
+        }*/
+        if(new_x == CPU_X
+           && new_y >= cpu_y
+           && new_y <= cpu_y + PADDLE_HEIGHT)
+        {
+            digitalWrite(PE_3,HIGH);
+            ball_dir_x = -ball_dir_x;
+            new_x += ball_dir_x + ball_dir_x;
+            digitalWrite(PE_3,HIGH);
+        }
+
+        // Check if we hit the player paddle
+        if(new_x == PLAYER_X
+           && new_y >= player_y
+           && new_y <= player_y + PADDLE_HEIGHT)
+        {
+            digitalWrite(PE_3,HIGH);
+            ball_dir_x = -ball_dir_x;
+            new_x += ball_dir_x + ball_dir_x;
+            digitalWrite(PE_3,LOW);
+            
+        }
+        //FillRect(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int c);
+        FillRect(ball_x, ball_y,2,2,0x00);
+        FillRect(new_x, new_y,2,2,YELLOW);
+        ball_x = new_x;
+        ball_y = new_y;
+
+        ball_update += BALL_RATE;
+    }
+
+    if(time > paddle_update && gameIsRunning) {
+        paddle_update += PADDLE_RATE;
+
+        // CPU paddle
+        V_line(CPU_X, cpu_y,PADDLE_HEIGHT, BLACK);
+        const uint8_t half_paddle = PADDLE_HEIGHT >> 1;
+        /*if(cpu_y + half_paddle > ball_y) {
+            cpu_y -= 1;
+        }
+        if(cpu_y + half_paddle < ball_y) {
+            cpu_y += 1;
+        }
+        if(cpu_y < 12) cpu_y = 12;
+        if(cpu_y + PADDLE_HEIGHT > 218) cpu_y = 218 - PADDLE_HEIGHT;
+        V_line(CPU_X, cpu_y, PADDLE_HEIGHT,BLACK);
+*/
+        if(up_state2) {
+          cpu_y -=1;
+        }
+        if(down_state2) {
+          cpu_y +=1;
+        }
+        up_state2 = down_state2 = false;
+        if(cpu_y < 12) cpu_y = 12;
+        if(cpu_y + PADDLE_HEIGHT > 218) cpu_y = 218 - PADDLE_HEIGHT;
+        V_line(CPU_X, cpu_y, PADDLE_HEIGHT,BLACK);  
+              
+        // Player paddle
+        V_line(PLAYER_X, player_y,PADDLE_HEIGHT, BLACK);
+        if(up_state) {
+            player_y -= 1;
+        }
+        if(down_state) {
+            player_y += 1;
+        }
+        up_state = down_state = false;
+        if(player_y < 12) player_y = 12;
+        if(player_y + PADDLE_HEIGHT > 218) player_y = 218 - PADDLE_HEIGHT;
+        V_line(PLAYER_X, player_y, PADDLE_HEIGHT,BLACK);
+    }
   
+  LCD_Bitmap(15,cpu_y,35,35,raqueta);
+  LCD_Sprite(210,player_y,35,35,raqueta2,1,0,1,0);
+  //LCD_Bitmap(126,130,35,35,raqueta);
+  uint8_t cpu_y = 100;
+  uint8_t player_y = 100;
+  
+}
+//***************************************************************************************************************************************
+// Función para el juego 
+//***************************************************************************************************************************************
+void drawCourt() {
+  Rect(10,10,300,220,0xffff);  
+}
+
+void gameOver()
+{
+  gameIsRunning = false;
+  LCD_Clear(0x00);
+  delay(100);
+  if(PLAYER_SCORE>CPU_SCORE)
+  {
+      String text1 = "Ganaste!";
+    LCD_Print(text1,5,4,1,0xFFFF,0x00);
+  }else
+  {
+    String text2 = "No Ganaste!";
+    LCD_Print(text2,5,4,1,0xFFFF,0x00);
+  }
+  
+
+  LCD_Print(String(CPU_SCORE),150,100,1,0xFFFF,0x00);
+  LCD_Print(String(PLAYER_SCORE),170,100,1,0xFFFF,0x00);
+  delay(100);
+  
+  while(digitalRead(UP_BUTTON) == HIGH && digitalRead(DOWN_BUTTON) == HIGH)  
+  {
+    delay(100);
+  }
+  gameIsRunning = true;
+  
+  CPU_SCORE = PLAYER_SCORE = 0;
+  
+  unsigned long start = millis();
+  LCD_Clear(0x00);
+while(millis() - start < 2000);
+ball_update = millis();    
+paddle_update = ball_update;
+gameIsRunning = true;
+resetBall=true;
+
+}
+
+void showScore()
+{
+  gameIsRunning = false;
+  LCD_Clear(0x00);
+  delay(100);
+  
+  unsigned long start = millis();
+  drawCourt();
+  String text3 = "Marcador";
+  LCD_Print(text3,70,90,1,0xFFFF,0x00);
+  LCD_Print(String(CPU_SCORE),65,100,1,0xFFFF,0x00);
+  LCD_Print(String(PLAYER_SCORE),90,100,1,0xFFFF,0x00);
+
+            
+
+while(millis() - start < 2000);
+ball_update = millis();    
+paddle_update = ball_update;
+gameIsRunning = true;
+resetBall=true;
+LCD_Clear(0x00);
+delay(50);
+Rect(10,10,240,220,0xffff);
+uint8_t cpu_y = 100;
+uint8_t player_y = 100;
+
 }
 //***************************************************************************************************************************************
 // Función para inicializar LCD
