@@ -53,11 +53,12 @@ const int DOWN_BUTTON2 = PC_7;
 //***************************************************************************************************************************************
 const unsigned long PADDLE_RATE = 1;
 const unsigned long BALL_RATE = 1;
+
 const uint8_t PADDLE_HEIGHT = 23;
 int MAX_SCORE = 8;
 
-int CPU_SCORE = 0;
-int PLAYER_SCORE = 0;
+int CPU_SCORE = 0; //Jugador 1
+int PLAYER_SCORE = 0; //Jugador 2
 
 uint8_t ball_x = 64, ball_y = 32;
 uint8_t ball_dir_x = 1, ball_dir_y = 1;
@@ -68,11 +69,11 @@ boolean resetBall = false;
 unsigned long ball_update;
 unsigned long paddle_update;
 
-const uint8_t CPU_X = 47;
-uint8_t cpu_y = 100;
+const uint8_t CPU_X = 47; //Estado incicial 1
+uint8_t cpu_y = 110;
 
-const uint8_t PLAYER_X = 210;
-uint8_t player_y = 100;
+const uint8_t PLAYER_X = 210;//Estado inicial 2
+uint8_t player_y = 110;
 
 //***************************************************************************************************************************************
 // Functions Prototypes
@@ -111,17 +112,20 @@ void setup() {
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
   Serial.println("Inicio");
   //Inicializacion Pantalla de carga
+  digitalWrite(PE_2, HIGH); //Señal para encender la 
+  delay(10);
+  digitalWrite(PE_2, LOW);  //Cancion de entrada 
   LCD_Init();
   LCD_Clear(0x00);
   FillRect(0, 0, 320, 240, BLACK);  
-  for(int x = 320-20; x >0; x--){
+  for(int x = 510; x >0; x--){
     
-  digitalWrite(PE_2, HIGH); //Señal para encender la 
-  digitalWrite(PE_2, LOW);  //Cancion de entrada 
+
   int anim2 = (x/11)%2;
   LCD_Sprite(95,110,144,17,titulo,2,anim2,0,0); 
   }
   LCD_Sprite(95,110,144,17,titulo,2,1,0,0);
+  delay(10);
   String text1 = "Presiona un boton";
   LCD_Print(text1, 20, 140, 2, 0xffff, 0x00);
   //CONDICION PARA EMPEZAR A JUGAR
@@ -141,7 +145,7 @@ void setup() {
   paddle_update = ball_update;
   //Direccion pelota inicial 
   ball_x = random(120,125); 
-  ball_y = random(110,120);  
+  ball_y = random(20,30);  
 }
 //***************************************************************************************************************************************
 // Loop Infinito
@@ -161,7 +165,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
   if(resetBall)
     {
       ball_x = random(120,125); 
-      ball_y = random(110,120);
+      ball_y = random(20,30);
       do
       {
       ball_dir_x = random(-1,2);
@@ -185,10 +189,13 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             PLAYER_SCORE++;
             if(PLAYER_SCORE==MAX_SCORE)
             {
-            //gameOver();
+            gameOver();
             }else
             {
-            //showScore();
+            digitalWrite(PE_3,HIGH);
+            delay(10);
+            digitalWrite(PE_3,LOW);
+            showScore();
             }
         }
         
@@ -200,47 +207,50 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             {
               gameOver();
             }else
-            {
-              showScore();
+            {   
+            digitalWrite(PE_3,HIGH);
+            delay(10);
+            digitalWrite(PE_3,LOW);
+            showScore();
             }
         }
 
         // Check if we hit the horizontal walls.
         if(new_y == 10 || new_y == 229) {
             digitalWrite(PA_6,HIGH);
+            delay(10);
+            digitalWrite(PA_6,LOW);
             ball_dir_y = -ball_dir_y;
             new_y += ball_dir_y + ball_dir_y;
-            digitalWrite(PA_6,LOW);
+            
             
         }
 
         // Check if we hit the CPU paddle
-       /* if(new_x == CPU_X && new_y >= cpu_y && new_y <= cpu_y + PADDLE_HEIGHT) {
-            ball_dir_x = -ball_dir_x;
-            new_x += ball_dir_x + ball_dir_x;
-        }*/
         if(new_x == CPU_X
            && new_y >= cpu_y
            && new_y <= cpu_y + PADDLE_HEIGHT)
         {
-            digitalWrite(PE_3,HIGH);
+            digitalWrite(PA_6,HIGH);
+            delay(10);
+            digitalWrite(PA_6,LOW);
             ball_dir_x = -ball_dir_x;
             new_x += ball_dir_x + ball_dir_x;
-            digitalWrite(PE_3,HIGH);
+            
         }
-
         // Check if we hit the player paddle
         if(new_x == PLAYER_X
            && new_y >= player_y
            && new_y <= player_y + PADDLE_HEIGHT)
         {
-            digitalWrite(PE_3,HIGH);
+            digitalWrite(PA_6,HIGH);
+            delay(10);
+            digitalWrite(PA_6,LOW);
             ball_dir_x = -ball_dir_x;
-            new_x += ball_dir_x + ball_dir_x;
-            digitalWrite(PE_3,LOW);
-            
+            new_x += ball_dir_x + ball_dir_x;    
         }
         //FillRect(unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int c);
+        //TAMAÑO DE LA PELOTA
         FillRect(ball_x, ball_y,2,2,0x00);
         FillRect(new_x, new_y,2,2,YELLOW);
         ball_x = new_x;
@@ -254,7 +264,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
 
         // CPU paddle
         V_line(CPU_X, cpu_y,PADDLE_HEIGHT, BLACK);
-        const uint8_t half_paddle = PADDLE_HEIGHT >> 1;
+        //const uint8_t half_paddle = PADDLE_HEIGHT >> 1;
         
         /*if(cpu_y + half_paddle > ball_y) {
             cpu_y -= 1;
@@ -309,23 +319,28 @@ void gameOver()
   delay(100);
   if(PLAYER_SCORE>CPU_SCORE)
   {
-      String text1 = "Ganaste!";
-    LCD_Print(text1,140,90,1,0xFFFF,0x00);
+      String text1 = "Gano Jugador 2 ";
+    LCD_Print(text1,100,100,1,BLUE,0x00);
   }else
   {
-    String text2 = "No Ganaste!";
-    LCD_Print(text2,140,90,1,0xFFFF,0x00);
+    String text2 = "Gano Jugador 1";
+    LCD_Print(text2,100,100,1,RED,0x00);
   }
   
 
-  LCD_Print(String(CPU_SCORE),150,100,1,0xFFFF,0x00);
-  LCD_Print(String(PLAYER_SCORE),170,100,1,0xFFFF,0x00);
-  delay(100);
+  LCD_Print(String(CPU_SCORE),110,120,1,0xFFFF,0x00);
+  LCD_Print(String(PLAYER_SCORE),180,120,1,0xFFFF,0x00);
+  drawCourt();
+
   
-  while(digitalRead(UP_BUTTON) == HIGH && digitalRead(DOWN_BUTTON) == HIGH)  
+  //CONDICION PARA EMPEZAR A JUGAR
+  while(digitalRead(UP_BUTTON)    == LOW 
+     && digitalRead(DOWN_BUTTON)  == LOW
+     && digitalRead(UP_BUTTON2)   == LOW 
+     && digitalRead(DOWN_BUTTON2) == LOW) 
   {
-    delay(100);
-  }
+    delay(100); //MIENTRAS NO SE OPRIMA SOLO ESPERA 
+  }  
   gameIsRunning = true;
   
   CPU_SCORE = PLAYER_SCORE = 0;
@@ -337,7 +352,7 @@ ball_update = millis();
 paddle_update = ball_update;
 gameIsRunning = true;
 resetBall=true;
-
+drawCourt();
 }
 //MARCADOR ENTRE CADA PUNTO 
 void showScore()
@@ -350,8 +365,8 @@ void showScore()
   drawCourt();
   String text3 = "Marcador";
   LCD_Print(text3,110,100,1,0xFFFF,0x00);
-  LCD_Print(String(CPU_SCORE),110,115,1,0xFFFF,0x00);
-  LCD_Print(String(PLAYER_SCORE),130,115,1,0xFFFF,0x00);
+  LCD_Print(String(CPU_SCORE),110,115,1,RED,WHITE);
+  LCD_Print(String(PLAYER_SCORE),150,115,1,BLUE,WHITE);
 
             
 
