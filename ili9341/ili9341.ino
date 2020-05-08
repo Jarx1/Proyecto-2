@@ -110,11 +110,12 @@ void setup() {
   Serial.begin(9600);
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
   Serial.println("Inicio");
+  //Inicializacion Pantalla de carga
   LCD_Init();
   LCD_Clear(0x00);
-  
   FillRect(0, 0, 320, 240, BLACK);  
   for(int x = 320-20; x >0; x--){
+    
   digitalWrite(PE_2, HIGH); //Señal para encender la 
   digitalWrite(PE_2, LOW);  //Cancion de entrada 
   int anim2 = (x/11)%2;
@@ -123,22 +124,24 @@ void setup() {
   LCD_Sprite(95,110,144,17,titulo,2,1,0,0);
   String text1 = "Presiona un boton";
   LCD_Print(text1, 20, 140, 2, 0xffff, 0x00);
+  //CONDICION PARA EMPEZAR A JUGAR
   while(digitalRead(UP_BUTTON)    == LOW 
      && digitalRead(DOWN_BUTTON)  == LOW
      && digitalRead(UP_BUTTON2)   == LOW 
-     && digitalRead(DOWN_BUTTON2) == LOW)
-     //CONDICION PARA EMPEZAR A JUGAR    
+     && digitalRead(DOWN_BUTTON2) == LOW) 
   {
-    delay(100);
+    delay(100); //MIENTRAS NO SE OPRIMA SOLO ESPERA 
   }  
+  //INICIO Y CONTEO DE TIEMPO 
   unsigned long start = millis();
   LCD_Clear(0x00);
   Rect(10,10,240,220,0xffff);
   while(millis() - start < 2000);
   ball_update = millis();
   paddle_update = ball_update;
-  ball_x = random(100,110); 
-  ball_y = random(150,160);  
+  //Direccion pelota inicial 
+  ball_x = random(120,125); 
+  ball_y = random(110,120);  
 }
 //***************************************************************************************************************************************
 // Loop Infinito
@@ -153,11 +156,12 @@ up_state |= (digitalRead(UP_BUTTON) == LOW);
 down_state |= (digitalRead(DOWN_BUTTON) == LOW);
 up_state2 |= (digitalRead(UP_BUTTON2) == LOW);
 down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW); 
-   
+
+//Reseteo de la pelota siempre inicia en medio   
   if(resetBall)
     {
-      ball_x = random(100,110); 
-      ball_y = random(150,160);
+      ball_x = random(120,125); 
+      ball_y = random(110,120);
       do
       {
       ball_dir_x = random(-1,2);
@@ -167,11 +171,9 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
       {
       ball_dir_y = random(-1,2);
       }while(ball_dir_y==0);
-      
-      
       resetBall=false;
     }
-    
+    //VERIFICACION DE LOS PUNTOS Y GOLPES 
     if(time > ball_update && gameIsRunning) {
         
         uint8_t new_x = ball_x + ball_dir_x;
@@ -246,13 +248,14 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
 
         ball_update += BALL_RATE;
     }
-
+    //CREACION DE LOS PADDLES Y RANGOS 
     if(time > paddle_update && gameIsRunning) {
         paddle_update += PADDLE_RATE;
 
         // CPU paddle
         V_line(CPU_X, cpu_y,PADDLE_HEIGHT, BLACK);
         const uint8_t half_paddle = PADDLE_HEIGHT >> 1;
+        
         /*if(cpu_y + half_paddle > ball_y) {
             cpu_y -= 1;
         }
@@ -287,21 +290,18 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
         if(player_y + PADDLE_HEIGHT > 218) player_y = 218 - PADDLE_HEIGHT;
         V_line(PLAYER_X, player_y, PADDLE_HEIGHT,BLACK);
     }
-  
+  //GRAFICOS DE LAS RAQUETAS 
   LCD_Bitmap(15,cpu_y,35,35,raqueta);
-  LCD_Sprite(210,player_y,35,35,raqueta2,1,0,1,0);
-  //LCD_Bitmap(126,130,35,35,raqueta);
-  uint8_t cpu_y = 100;
-  uint8_t player_y = 100;
-  
+  LCD_Sprite(210,player_y,35,35,raqueta2,1,0,1,0);  
 }
 //***************************************************************************************************************************************
 // Función para el juego 
 //***************************************************************************************************************************************
+//DIBUJO DE RECTANGULO 
 void drawCourt() {
-  Rect(10,10,300,220,0xffff);  
+  Rect(10,10,240,220,0xffff);  
 }
-
+//JUEGO TERMINADO UN GANADOR
 void gameOver()
 {
   gameIsRunning = false;
@@ -310,11 +310,11 @@ void gameOver()
   if(PLAYER_SCORE>CPU_SCORE)
   {
       String text1 = "Ganaste!";
-    LCD_Print(text1,5,4,1,0xFFFF,0x00);
+    LCD_Print(text1,140,90,1,0xFFFF,0x00);
   }else
   {
     String text2 = "No Ganaste!";
-    LCD_Print(text2,5,4,1,0xFFFF,0x00);
+    LCD_Print(text2,140,90,1,0xFFFF,0x00);
   }
   
 
@@ -330,8 +330,8 @@ void gameOver()
   
   CPU_SCORE = PLAYER_SCORE = 0;
   
-  unsigned long start = millis();
-  LCD_Clear(0x00);
+unsigned long start = millis();
+LCD_Clear(0x00);
 while(millis() - start < 2000);
 ball_update = millis();    
 paddle_update = ball_update;
@@ -339,7 +339,7 @@ gameIsRunning = true;
 resetBall=true;
 
 }
-
+//MARCADOR ENTRE CADA PUNTO 
 void showScore()
 {
   gameIsRunning = false;
@@ -349,9 +349,9 @@ void showScore()
   unsigned long start = millis();
   drawCourt();
   String text3 = "Marcador";
-  LCD_Print(text3,70,90,1,0xFFFF,0x00);
-  LCD_Print(String(CPU_SCORE),65,100,1,0xFFFF,0x00);
-  LCD_Print(String(PLAYER_SCORE),90,100,1,0xFFFF,0x00);
+  LCD_Print(text3,110,100,1,0xFFFF,0x00);
+  LCD_Print(String(CPU_SCORE),110,115,1,0xFFFF,0x00);
+  LCD_Print(String(PLAYER_SCORE),130,115,1,0xFFFF,0x00);
 
             
 
