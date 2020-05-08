@@ -51,6 +51,28 @@ const int DOWN_BUTTON2 = PC_7;
 //***************************************************************************************************************************************
 //Variables para el juego  
 //***************************************************************************************************************************************
+const unsigned long PADDLE_RATE = 1;
+const unsigned long BALL_RATE = 1;
+const uint8_t PADDLE_HEIGHT = 23;
+int MAX_SCORE = 8;
+
+int CPU_SCORE = 0;
+int PLAYER_SCORE = 0;
+
+uint8_t ball_x = 64, ball_y = 32;
+uint8_t ball_dir_x = 1, ball_dir_y = 1;
+
+boolean gameIsRunning = true;
+boolean resetBall = false;
+
+unsigned long ball_update;
+unsigned long paddle_update;
+
+const uint8_t CPU_X = 47;
+uint8_t cpu_y = 100;
+
+const uint8_t PLAYER_X = 210;
+uint8_t player_y = 100;
 
 //***************************************************************************************************************************************
 // Functions Prototypes
@@ -74,6 +96,16 @@ void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int 
 // Inicialización
 //***************************************************************************************************************************************
 void setup() {
+  pinMode(UP_BUTTON, INPUT);     // LOS
+  pinMode(DOWN_BUTTON, INPUT);   // BOTONES 
+  pinMode(UP_BUTTON2,INPUT);     // PARA 
+  pinMode(DOWN_BUTTON2,INPUT);   // 2 JUGADORES 
+
+  pinMode(PA_6, OUTPUT);         // SALIDAS
+  pinMode(PE_3, OUTPUT);         // PARA 
+  pinMode(PE_2, OUTPUT);         // ACTIVAR 
+  pinMode(PF_1, OUTPUT);         // AUDIO
+  
   SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
   Serial.begin(9600);
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
@@ -81,7 +113,24 @@ void setup() {
   LCD_Init();
   LCD_Clear(0x00);
   
-  
+  FillRect(0, 0, 320, 240, BLACK);  
+  for(int x = 320-20; x >0; x--){
+  digitalWrite(PE_2, HIGH);
+  digitalWrite(PE_2, LOW); 
+  int anim2 = (x/11)%2;
+  LCD_Sprite(95,110,144,17,titulo,2,anim2,0,0); 
+  }
+  LCD_Sprite(95,110,144,17,titulo,2,1,0,0);
+  String text1 = "Presiona un boton";
+  LCD_Print(text1, 20, 140, 2, 0xffff, 0x00);
+  while(digitalRead(UP_BUTTON)    == LOW 
+     && digitalRead(DOWN_BUTTON)  == LOW
+     && digitalRead(UP_BUTTON2)   == LOW 
+     && digitalRead(DOWN_BUTTON2) == LOW)
+     //CONDICION PARA EMPEZAR A JUGAR    
+  {
+    delay(100);
+  }  
  }
   
 }
