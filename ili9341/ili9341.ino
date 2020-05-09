@@ -199,8 +199,8 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             }
         }
         
-         // Check if we hit the vertical walls
-        if(new_x == 246) //CPU Gets a Point
+         //Verificar si se golpearon las paredes verticales
+        if(new_x == 246) //J1 Anoto un punto
         {
             CPU_SCORE++;
             if(CPU_SCORE==MAX_SCORE)
@@ -215,7 +215,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             }
         }
 
-        // Check if we hit the horizontal walls.
+        // Verificar se se golpearon las paredes horizontales 
         if(new_y == 10 || new_y == 229) {
             digitalWrite(PA_6,HIGH);
             delay(10);
@@ -226,7 +226,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             
         }
 
-        // Check if we hit the CPU paddle
+        // Verificacion si se golpeo la raqueta roja 
         if(new_x == CPU_X
            && new_y >= cpu_y
            && new_y <= cpu_y + PADDLE_HEIGHT)
@@ -238,7 +238,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
             new_x += ball_dir_x + ball_dir_x;
             
         }
-        // Check if we hit the player paddle
+        // Verificacion si se golpeo la raqueta roja
         if(new_x == PLAYER_X
            && new_y >= player_y
            && new_y <= player_y + PADDLE_HEIGHT)
@@ -262,20 +262,8 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
     if(time > paddle_update && gameIsRunning) {
         paddle_update += PADDLE_RATE;
 
-        // CPU paddle
+        // Raqueta J1
         V_line(CPU_X, cpu_y,PADDLE_HEIGHT, BLACK);
-        //const uint8_t half_paddle = PADDLE_HEIGHT >> 1;
-        
-        /*if(cpu_y + half_paddle > ball_y) {
-            cpu_y -= 1;
-        }
-        if(cpu_y + half_paddle < ball_y) {
-            cpu_y += 1;
-        }
-        if(cpu_y < 12) cpu_y = 12;
-        if(cpu_y + PADDLE_HEIGHT > 218) cpu_y = 218 - PADDLE_HEIGHT;
-        V_line(CPU_X, cpu_y, PADDLE_HEIGHT,BLACK);
-*/
         if(up_state2) {
           cpu_y -=1;
         }
@@ -287,7 +275,7 @@ down_state2 |= (digitalRead(DOWN_BUTTON2) == LOW);
         if(cpu_y + PADDLE_HEIGHT > 218) cpu_y = 218 - PADDLE_HEIGHT;
         V_line(CPU_X, cpu_y, PADDLE_HEIGHT,BLACK);  
               
-        // Player paddle
+        // Raqueta J2
         V_line(PLAYER_X, player_y,PADDLE_HEIGHT, BLACK);
         if(up_state) {
             player_y -= 1;
@@ -354,6 +342,7 @@ gameIsRunning = true;
 resetBall=true;
 drawCourt();
 }
+
 //MARCADOR ENTRE CADA PUNTO 
 void showScore()
 {
